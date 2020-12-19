@@ -1,39 +1,121 @@
-// Enemies our player must avoid
-var Enemy = function() {
-    // Variables applied to each of our instances go here,
-    // we've provided one for you to get started
+//point when character appears
+const xStartPositionPlayer = 202;
+const yStartPositionPlayer = 400;
 
-    // The image/sprite for our enemies, this uses
-    // a helper we've provided to easily load images
-    this.sprite = 'images/enemy-bug.png';
+//the step to which the character moves when the key is pressed
+const stepByX = 98;
+const stepByY = 83;
+
+//range of speed
+const minSpeed = 100;
+const maxSpeed = 1000;
+
+//touch distance
+//these values describe when the collide is happen
+const xTouchDistance = 80;
+const yTouchDistance = 60;
+
+//the frame where the character can move
+const playerBorders = {
+    x : {
+        start: 0,
+        end: 400
+        },
+    y : {
+        start: 0,
+        end: 400
+        }
 };
 
-// Update the enemy's position, required method for game
-// Parameter: dt, a time delta between ticks
+//the frame where enemies move
+//start value = -100 for smooth movement
+const enemyBordersX = {
+        start: -100,
+        end: 505
+};
+
+const Enemy = function(x, y, speed, player) {
+    this.x = x;
+    this.y = y;
+    this.speed = speed;
+    this.sprite = "images/enemy-bug.png";
+    this.player = player;
+};
+
+Enemy.prototype.getSpeed = function(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    this.speed = Math.floor(Math.random() * (max - min + 1)) + min;
+};
+
 Enemy.prototype.update = function(dt) {
-    // You should multiply any movement by the dt parameter
-    // which will ensure the game runs at the same speed for
-    // all computers.
+
+    this.x += this.speed * dt;
+
+    //x>510 means that Enemy left the field
+    //folowing x=-100 for Enemy was hidden in its appearing point.
+    if (this.x > enemyBordersX.end) {
+        this.x = enemyBordersX.start;
+        this.getSpeed(minSpeed, maxSpeed);
+    };
+
+    //check colliding Enemy with player object.
+    this.getCollide();
 };
 
-// Draw the enemy on the screen, required method for game
+Enemy.prototype.getCollide = function() {
+    if (this.player.x < this.x + xTouchDistance && this.player.x + xTouchDistance > this.x && this.player.y < this.y + yTouchDistance && yTouchDistance + this.player.y > this.y) {
+        this.player.setStartPosition();
+    }
+};
+
 Enemy.prototype.render = function() {
     ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
 };
 
-// Now write your own player class
-// This class requires an update(), render() and
-// a handleInput() method.
+const Player = function(x, y) {
+    this.x = x;
+    this.y = y;
+    this.sprite = "images/char-boy.png";
+};
 
+Player.prototype.update = function() {
 
-// Now instantiate your objects.
-// Place all enemy objects in an array called allEnemies
-// Place the player object in a variable called player
+};
 
+Player.prototype.render = function() {
+    ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+};
 
+Player.prototype.setStartPosition = function() {
+    this.x = xStartPositionPlayer;
+    this.y = yStartPositionPlayer;
+};
 
-// This listens for key presses and sends the keys to your
-// Player.handleInput() method. You don't need to modify this.
+Player.prototype.handleInput = function(keyPressed, stepX, stepY) {
+
+    if (keyPressed == "left" && (this.x-stepX) > playerBorders.x.start) {
+        this.x -= stepX;
+    };
+    if (keyPressed == "right" && (this.x+stepX) < playerBorders.x.end) {
+        this.x += stepX;
+    };
+    if (keyPressed == "up" && this.y > playerBorders.y.start) {
+        this.y -= stepY;
+    };
+    if (keyPressed == "down" && this.y < playerBorders.y.end) {
+        this.y += stepY;
+    };
+
+    if (this.y < 0 ){
+        alert("You win!");
+        this.setStartPosition();
+    };
+};
+
+const player = new Player(xStartPositionPlayer, yStartPositionPlayer);
+const allEnemies = [new Enemy(0,280,25,player), new Enemy(0,200,25,player), new Enemy(0,130,25,player)];
+
 document.addEventListener('keyup', function(e) {
     var allowedKeys = {
         37: 'left',
@@ -42,5 +124,5 @@ document.addEventListener('keyup', function(e) {
         40: 'down'
     };
 
-    player.handleInput(allowedKeys[e.keyCode]);
+    player.handleInput(allowedKeys[e.keyCode], stepByX, stepByY);
 });
